@@ -1,112 +1,104 @@
 package org.lwjglb.game;
 
+import org.joml.Vector2f;
 import org.joml.Vector3f;
-import org.lwjgl.glfw.GLFW;
-
+import static org.lwjgl.glfw.GLFW.*;
 import org.lwjglb.engine.GameItem;
 import org.lwjglb.engine.GameLogic;
+import org.lwjglb.engine.MouseInput;
 import org.lwjglb.engine.Window;
+import org.lwjglb.engine.graph.Camera;
+import org.lwjglb.engine.graph.Material;
 import org.lwjglb.engine.graph.Mesh;
-
+import org.lwjglb.engine.graph.OBJLoader;
+import org.lwjglb.engine.graph.PointLight;
+import org.lwjglb.engine.graph.Texture;
 
 public class TestGame implements GameLogic
 {
-	private int displxInc = 0;
-	private int displyInc = 0;
-	private int displzInc = 0;
-	private int scaleInc = 0;
+	private static final float MOUSE_SENSITIVITY = 0.2f;
+	private static final float CAMERA_POS_STEP = 0.05f;
+	private final Vector3f cameraInc;
 	
+	private final Camera camera;
 	private final Renderer renderer;
 	private GameItem[] gameItems;
-	private int temp = 0;
+	private Vector3f ambientLight;
+	private PointLight pointLight;
 	
 	public TestGame() {
 		renderer = new Renderer();
+		camera = new Camera();
+		cameraInc = new Vector3f(0, 0, 0);
 	}
 
 	@Override
 	public void init(Window window) throws Exception {
 		renderer.init(window);
 		
-		float[] positions = new float[]{
-			-0.5f, 0.5f, 0.5f,
-			-0.5f, -0.5f, 0.5f,
-			0.5f, -0.5f, 0.5f,
-			0.5f, 0.5f, 0.5f 
-		};
+		float reflectance = 1f;
 		
-		float[] colours = new float[]{
-			0.5f, 0.0f, 0.0f,
-			0.0f, 0.5f, 0.0f,
-			0.0f, 0.0f, 0.5f,
-			0.0f, 0.5f, 0.5f
-		};
-		int[] indices = new int[] {
-			0, 1, 3, 3, 1, 2
-		};
-		Mesh mesh = new Mesh(positions, colours, indices);
-		GameItem gameItem = new GameItem(mesh);
-		gameItem.setPosition(0, 0, -1000); //working start coordinates (0, 0, -1000)
-		gameItems = new GameItem[]{gameItem};
+		Mesh mesh = OBJLoader.loadMesh("/models/cube.obj");
+		Texture texture = new Texture("/textures/grassblock.png");
+		Material material = new Material(texture, reflectance);
+		
+		mesh.setMaterial(material);
+		GameItem gameItem1 = new GameItem(mesh);
+		gameItem1.setScale(0.5f);
+		gameItem1.setPosition(0, 0, -2f);
+		gameItems = new GameItem[]{gameItem1};
+		
+		ambientLight = new Vector3f(0.3f, 0.3f, 0.3f);
+		Vector3f lightColour = new Vector3f(1, 1, 1);
+		Vector3f lightPosition = new Vector3f(0, 0, 1);
+		float lightIntensity = 1.0f;
+		pointLight = new PointLight(lightColour, lightPosition, lightIntensity);
+		PointLight.Attenuation att = new PointLight.Attenuation(0.0f, 0.0f, 1.0f);
+		pointLight.setAttenuation(att);
 	}
 
 	@Override
-	public void input(Window window) {
-		displxInc = 0;
-		displyInc = 0;
-		displzInc = 0;
-		scaleInc = 0;
-		if(window.isKeyPressed(GLFW.GLFW_KEY_UP)) {
-			displyInc = 1;
-		}else if(window.isKeyPressed(GLFW.GLFW_KEY_DOWN)) {
-			displyInc = -1;
-		}else if(window.isKeyPressed(GLFW.GLFW_KEY_LEFT)) {
-			displxInc = -1;
-		}else if(window.isKeyPressed(GLFW.GLFW_KEY_RIGHT)) {
-			displxInc = 1;
-		}else if(window.isKeyPressed(GLFW.GLFW_KEY_A)) {
-			displzInc = -1;
-		}else if(window.isKeyPressed(GLFW.GLFW_KEY_Q)) {
-			displzInc = 1;
-		}else if(window.isKeyPressed(GLFW.GLFW_KEY_Z)) {
-			scaleInc = -1;
-		}else if(window.isKeyPressed(GLFW.GLFW_KEY_X)) {
-			scaleInc = 1;
+	public void input(Window window, MouseInput mouseInput) {
+		cameraInc.set(0, 0, 0);
+		if(window.isKeyPressed(GLFW_KEY_W)) {
+			cameraInc.z = -1;
+		}else if(window.isKeyPressed(GLFW_KEY_S)) {
+			cameraInc.z = 1;
+		}
+		
+		if(window.isKeyPressed(GLFW_KEY_A)) {
+			cameraInc.x = -1;
+		}else if(window.isKeyPressed(GLFW_KEY_D)) {
+			cameraInc.x = 1;
+		}
+		
+		if(window.isKeyPressed(GLFW_KEY_Z)) {
+			cameraInc.y = -1;
+		}else if(window.isKeyPressed(GLFW_KEY_X)) {
+			cameraInc.y = 1;
+		}
+		
+		float lightPos = pointLight.getPosition().z;
+		if(window.isKeyPressed(GLFW_KEY_N)) {
+			this.pointLight.getPosition().z = lightPos + 0.1f;
+		}else if(window.isKeyPressed(GLFW_KEY_M)) {
+			this.pointLight.getPosition().z = lightPos - 0.1f;
 		}
 	}
 
 	@Override
-	public void update(float interval) {
-		for(GameItem gameItem : gameItems) {
-			Vector3f position = gameItem.getPosition();
-			float posx = position.x + displxInc * 0.0001f;
-			float posy = position.y + displyInc * 0.0001f;
-			float posz = position.z + displzInc * 0.0001f;
-			gameItem.setPosition(posx, posy, posz);
-			
-			float scale = gameItem.getScale();
-			scale += scaleInc * 0.0001f;
-			if(scale < 0) {
-				scale = 0;
-			}
-			gameItem.setScale(scale);
-			if(temp == 1000) {
-				//System.out.println("(" + posx + ", " + posy + ", " + posz + ")");
-				temp = 0;
-			}
-			
-			float rotation = gameItem.getRotation().z + 1.5f;
-			if(rotation > 360) {
-				rotation = 0;
-			}
-			gameItem.setRotation(0, 0, rotation);
-			temp++;
+	public void update(float interval, MouseInput mouseInput) {
+		camera.movePosition(cameraInc.x * CAMERA_POS_STEP, cameraInc.y * CAMERA_POS_STEP, cameraInc.z * CAMERA_POS_STEP);
+		
+		if(mouseInput.isRightButtonPressed()) {
+			Vector2f rotVec = mouseInput.getDisplVec();
+			camera.moveRotation(rotVec.x * MOUSE_SENSITIVITY, rotVec.y * MOUSE_SENSITIVITY, 0);
 		}
 	}
 
 	@Override
 	public void render(Window window) {
-		renderer.render(window, gameItems);
+		renderer.render(window, camera, gameItems, ambientLight, pointLight);
 	}
 
 	@Override

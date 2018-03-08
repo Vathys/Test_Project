@@ -1,7 +1,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  	
   	<modelVersion>4.0.0</modelVersion>
+  	
   	<groupId>org.lwjglb</groupId>
+  	
   	<artifactId>Test_Project</artifactId>
+  	
   	<version>1.0</version>
 
 <properties>
@@ -10,9 +14,9 @@
 	
 	<joml.version>1.9.8</joml.version>
 
+	<pngdecoder.version>1.0</pngdecoder.version>
+	
 </properties>
-
-
 
 <dependencies>
 	
@@ -672,10 +676,19 @@
 		
 		<version>${joml.version}</version>
 	
-		</dependency>
+	</dependency>
+	
+	<dependency>
+	
+		<groupId>org.l33tlabs.twl</groupId>
+	
+		<artifactId>pngdecoder</artifactId>
+	
+		<version>1.0</version>
+	
+	</dependency>
 
-	</dependencies>
-
+</dependencies>
 	
 <profiles>
 	
